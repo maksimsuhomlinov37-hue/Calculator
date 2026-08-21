@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Калькулятор</title>
+    <!-- ===== ФАВИКОН ===== -->
+    <link rel="icon" type="image/png" href="Calculator-Favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        /* ===== БАЗА ===== */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: #f2f2f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: max(12px, 3vh);
+            transition: background 0.4s;
+        }
+        body.dark { background: #1c1c1e; }
+
+        /* ===== КНОПКА ГАМБУРГЕРА (закреплена слева сверху) ===== */
+        .menu-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(0,0,0,0.04);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.02);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 10px;
+            transition: background 0.2s, transform 0.2s, border 0.2s;
+        }
+        body.dark .menu-btn {
+            background: rgba(44,44,46,0.8);
+            border-color: rgba(255,255,255,0.06);
+        }
+        .menu-btn:hover {
+            background: rgba(255,255,255,0.9);
+            transform: scale(0.96);
+        }
+        body.dark .menu-btn:hover {
+            background: rgba(60,60,62,0.9);
+        }
+        .menu-btn:active {
+            transform: scale(0.92);
+        }
+        .menu-btn span {
+            display: block;
+            height: 2px;
+            width: 20px;
+            background: #1c1c1e;
+            border-radius: 2px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center;
+        }
+        body.dark .menu-btn span {
+            background: #fff;
+        }
+        .menu-btn.active span:nth-child(1) {
+            transform: translateY(5px) rotate(45deg);
+        }
+        .menu-btn.active span:nth-child(2) {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+        .menu-btn.active span:nth-child(3) {
+            transform: translateY(-5px) rotate(-45deg);
+        }
+
+        /* ===== БОКОВОЕ МЕНЮ ===== */
+        .menu-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            pointer-events: none;
+        }
+        .menu-overlay.open {
+            pointer-events: auto;
+        }
+        .menu-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.25);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .menu-overlay.open .menu-backdrop {
+            opacity: 1;
+        }
+        .menu-side {
+            position: relative;
+            width: 300px;
+            max-width: 80%;
+            height: 100%;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 2px 0 30px rgba(0,0,0,0.06);
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 24px 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .menu-overlay.open .menu-side {
+            transform: translateX(0);
+        }
+        body.dark .menu-side {
+            background: rgba(44,44,46,0.85);
+            box-shadow: 2px 0 30px rgba(0,0,0,0.3);
+        }
+
+        .menu-header {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1c1c1e;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        body.dark .menu-header {
+            color: #fff;
+            border-bottom-color: rgba(255,255,255,0.08);
+        }
+        .menu-header svg {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            fill: none;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.15s;
+            color: #1c1c1e;
+            font-weight: 500;
+            font-size: 15px;
+            background: transparent;
+            border: none;
+            width: 100%;
+            text-align: left;
+        }
+        body.dark .menu-item {
+            color: #fff;
+        }
+        .menu-item:hover {
+            background: rgba(0,0,0,0.04);
+        }
+        body.dark .menu-item:hover {
+            background: rgba(255,255,255,0.06);
+        }
+        .menu-item svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            fill: none;
+            flex-shrink: 0;
+        }
+        .menu-item .arrow {
+            margin-left: auto;
+            opacity: 0.5;
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+        .menu-item.open .arrow {
+            transform: rotate(90deg);
+        }
+
+        .sub-menu {
+            padding-left: 44px;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.35s ease;
+        }
+        .menu-item.open + .sub-menu {
+            max-height: 400px;
+        }
+        .sub-menu .menu-item {
+            font-size: 14px;
+            font-weight: 400;
+            padding: 6px 0;
+            gap: 10px;
+        }
+        .sub-menu .menu-item .color-preview {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            transition: border 0.2s;
+            flex-shrink: 0;
+        }
+        .sub-menu .menu-item .color-preview.active {
+            border-color: #1c1c1e;
+        }
+        body.dark .sub-menu .menu-item .color-preview.active {
+            border-color: #fff;
+        }
+
+        .theme-toggle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+        }
+        .theme-toggle-item span {
+            font-size: 14px;
+            font-weight: 400;
+            color: #1c1c1e;
+        }
+        body.dark .theme-toggle-item span {
+            color: #fff;
+        }
+        .switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #e5e5ea;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+            flex-shrink: 0;
+        }
+        body.dark .switch {
+            background: #3a3a3c;
+        }
+        .switch.active {
+            background: var(--accent-color, #FF9500);
+        }
+        body.dark .switch.active {
+            background: var(--accent-color-dark, #FF9F0A);
+        }
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .switch.active::after {
+            transform: translateX(20px);
+        }
+
+        /* ===== КАЛЬКУЛЯТОР (корпус) ===== */
+        .calculator-wrapper {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            position: relative;
+            z-index: 2;
+            max-width: 640px;
+            width: 100%;
+        }
+
+        /* Выезжающая панель функций (с эффектом стекла) */
+        .ext-panel {
+            width: 160px;
+            flex-shrink: 0;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 9999px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            padding: 20px 12px 20px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.5s cubic-bezier(0.16,1,0.3,1),
+                        opacity 0.4s, background 0.4s, border 0.4s,
+                        margin 0.5s cubic-bezier(0.16,1,0.3,1);
+            transform: translateX(-120%);
+            opacity: 0;
+            margin-right: 0;
+            z-index: 1;
+        }
+        body.dark .ext-panel {
+            background: rgba(44,44,46,0.7);
+            border-color: rgba(255,255,255,0.05);
+        }
+        .ext-panel.open {
+            transform: translateX(0);
+            opacity: 1;
+            margin-right: 12px;
+        }
+        .ext-panel .btn-ext {
+            padding: 12px 0;
+            border: none;
+            border-radius: 9999px;
+            font-size: 15px;
+            font-weight: 500;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: #1c1c1e;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.15s;
+            text-align: center;
+            width: 100%;
+        }
+        body.dark .ext-panel .btn-ext {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+        }
+        .ext-panel .btn-ext:hover {
+            background: rgba(255,255,255,0.8);
+        }
+        body.dark .ext-panel .btn-ext:hover {
+            background: rgba(255,255,255,0.12);
+        }
+        .ext-panel .btn-ext:active { transform: scale(0.94); }
+        .ext-panel .btn-ext.operator {
+            background: var(--accent-color, #FF9500);
+            color: #fff;
+        }
+        body.dark .ext-panel .btn-ext.operator {
+            background: var(--accent-color-dark, #FF9F0A);
+        }
+        .ext-panel .btn-ext.operator:hover {
+            background: #e68600;
+        }
+        body.dark .ext-panel .btn-ext.operator:hover {
+            background: #e08c00;
+        }
+
+        /* Основной корпус с эффектом стекла */
+        .container {
+            flex: 1;
+            min-width: 0;
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 32px;
+            padding: clamp(20px, 4vw, 36px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.04);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: background 0.4s, border 0.4s, box-shadow 0.4s;
+            position: relative;
+            z-index: 2;
+        }
+        body.dark .container {
+            background: rgba(44,44,46,0.75);
+            border-color: rgba(255,255,255,0.05);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        /* Кнопка открытия панели функций (внутри корпуса) */
+        .toggle-ext {
+            position: absolute;
+            top: 20px;
+            left: 12px;
+            z-index: 10;
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: #8e8e93;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            padding: 0;
+        }
+        body.dark .toggle-ext {
+            color: #a0a0a5;
+            background: rgba(255,255,255,0.05);
+        }
+        .toggle-ext:hover { transform: scale(1.05); }
+        .toggle-ext:active { transform: scale(0.92); }
+        .toggle-ext svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform 0.4s;
+        }
+
+        /* Хедер с логотипом */
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: clamp(8px, 2vw, 18px);
+            padding-left: 32px;
+            position: relative;
+        }
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-right: 10px;
+        }
+        .header-logo img {
+            height: clamp(28px, 4vw, 40px);
+            width: auto;
+            border-radius: 8px;
+        }
+        .brand {
+            font-size: clamp(14px, 2.5vw, 20px);
+            font-weight: 600;
+            color: #1c1c1e;
+            letter-spacing: -0.2px;
+        }
+        body.dark .brand { color: #fff; }
+        .brand span { color: var(--accent-color, #FF9500); }
+        body.dark .brand span { color: var(--accent-color-dark, #FF9F0A); }
+        .header-spacer { flex: 1; }
+
+        /* Экран */
+        .display {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            padding: 4px 0 10px;
+            min-height: clamp(80px, 16vh, 120px);
+        }
+        .display-expr {
+            width: 100%;
+            text-align: right;
+            font-size: clamp(24px, 6vw, 40px);
+            font-weight: 600;
+            color: #1c1c1e;
+            letter-spacing: -0.5px;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none;
+            min-height: 40px;
+        }
+        .display-expr::-webkit-scrollbar { display: none; }
+        body.dark .display-expr { color: #fff; }
+
+        .display-preview {
+            width: 100%;
+            text-align: right;
+            font-size: clamp(18px, 4vw, 28px);
+            font-weight: 400;
+            color: #8e8e93;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            padding: 4px 14px;
+            border-radius: 9999px;
+            min-height: 40px;
+            margin-top: 4px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none;
+        }
+        .display-preview::-webkit-scrollbar { display: none; }
+        body.dark .display-preview {
+            background: rgba(255,255,255,0.05);
+            color: #a0a0a5;
+        }
+        .display-preview.result {
+            font-size: clamp(28px, 7vw, 48px);
+            font-weight: 700;
+            color: var(--accent-color, #FF9500);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            min-height: 60px;
+            padding: 8px 16px;
+        }
+        body.dark .display-preview.result {
+            background: rgba(44,44,46,0.7);
+            color: var(--accent-color-dark, #FF9F0A);
+        }
+
+        /* Сетка кнопок */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: clamp(8px, 1.5vw, 14px);
+            margin-top: clamp(8px, 1vw, 16px);
+        }
+        .btn {
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            font-size: clamp(18px, 4vw, 26px);
+            font-weight: 500;
+            font-family: 'Open Sans', sans-serif;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: #1c1c1e;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.15s cubic-bezier(0.34,1.56,0.64,1);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            user-select: none;
+            min-height: clamp(48px, 8vh, 76px);
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+            width: 100%;
+        }
+        .btn.zero {
+            grid-column: span 2;
+            border-radius: 9999px;
+            aspect-ratio: auto;
+            width: 100%;
+            justify-content: flex-start;
+            padding-left: clamp(20px, 4vw, 32px);
+        }
+        body.dark .btn {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+        }
+        .btn:hover {
+            background: rgba(255,255,255,0.8);
+        }
+        body.dark .btn:hover {
+            background: rgba(255,255,255,0.12);
+        }
+        .btn:active {
+            transform: scale(0.92);
+            transition-duration: 0.05s;
+        }
+
+        /* ===== ОПЕРАТОРЫ И РАВНО — ОДИНАКОВЫЙ АКЦЕНТНЫЙ СТИЛЬ ===== */
+        .btn.operator,
+        .btn.equal {
+            background: var(--accent-color, #FF9500);
+            color: #fff;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        body.dark .btn.operator,
+        body.dark .btn.equal {
+            background: var(--accent-color-dark, #FF9F0A);
+        }
+        .btn.operator:hover,
+        .btn.equal:hover {
+            background: #e68600;
+        }
+        body.dark .btn.operator:hover,
+        body.dark .btn.equal:hover {
+            background: #e08c00;
+        }
+
+        .btn.func {
+            background: rgba(255,255,255,0.3);
+            color: #8e8e93;
+        }
+        body.dark .btn.func {
+            background: rgba(255,255,255,0.03);
+            color: #a0a0a5;
+        }
+        .btn.func:hover {
+            background: rgba(255,255,255,0.5);
+        }
+        body.dark .btn.func:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        /* Внешняя кнопка темы (справа) */
+        .theme-fixed {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid rgba(0,0,0,0.04);
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: #8e8e93;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s, border 0.2s;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.02);
+        }
+        body.dark .theme-fixed {
+            background: rgba(44,44,46,0.8);
+            border-color: rgba(255,255,255,0.06);
+            color: #a0a0a5;
+        }
+        .theme-fixed:hover {
+            background: rgba(255,255,255,0.9);
+            transform: scale(0.94);
+        }
+        body.dark .theme-fixed:hover {
+            background: rgba(60,60,62,0.9);
+        }
+        .theme-fixed:active {
+            transform: scale(0.88);
+        }
+        .theme-fixed svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* ================================================================
+           АДАПТИВНОСТЬ ДЛЯ ТЕЛЕФОНОВ (без рамок, на весь экран)
+           ================================================================ */
+        @media (max-width: 767px) {
+            body {
+                padding: 0 !important;
+                align-items: stretch !important;
+            }
+            .calculator-wrapper {
+                max-width: 100% !important;
+                width: 100% !important;
+                border-radius: 0 !important;
+            }
+            .container {
+                border-radius: 0 !important;
+                padding: 16px !important;
+                box-shadow: none !important;
+                border: none !important;
+                background: rgba(255,255,255,0.85) !important;
+                backdrop-filter: blur(20px) !important;
+                -webkit-backdrop-filter: blur(20px) !important;
+            }
+            body.dark .container {
+                background: rgba(44,44,46,0.85) !important;
+            }
+            .ext-panel {
+                border-radius: 0 !important;
+                margin-right: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: rgba(255,255,255,0.7) !important;
+            }
+            body.dark .ext-panel {
+                background: rgba(44,44,46,0.7) !important;
+            }
+            .ext-panel.open {
+                margin-right: 8px !important;
+            }
+            .menu-btn {
+                top: 12px !important;
+                left: 12px !important;
+                width: 40px !important;
+                height: 40px !important;
+            }
+            .theme-fixed {
+                top: 12px !important;
+                right: 12px !important;
+                width: 40px !important;
+                height: 40px !important;
+            }
+            .toggle-ext {
+                top: 12px !important;
+                left: 4px !important;
+                width: 30px !important;
+                height: 30px !important;
+            }
+            .header {
+                padding-left: 24px !important;
+            }
+            .brand {
+                font-size: clamp(14px, 4vw, 20px) !important;
+            }
+            .header-logo img {
+                height: clamp(24px, 5vw, 32px) !important;
+            }
+        }
+
+        /* ===== ПЛАНШЕТЫ (768-1024px) ===== */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            body {
+                padding: 20px !important;
+            }
+            .calculator-wrapper {
+                max-width: 580px !important;
+                margin: 0 auto !important;
+                border-radius: 32px !important;
+            }
+            .container {
+                border-radius: 32px !important;
+                padding: 24px !important;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.04) !important;
+                border: 1px solid rgba(255,255,255,0.2) !important;
+                background: rgba(255,255,255,0.75) !important;
+                backdrop-filter: blur(20px) !important;
+                -webkit-backdrop-filter: blur(20px) !important;
+            }
+            body.dark .container {
+                background: rgba(44,44,46,0.75) !important;
+                border-color: rgba(255,255,255,0.05) !important;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.2) !important;
+            }
+            .ext-panel {
+                border-radius: 9999px !important;
+                border: 1px solid rgba(255,255,255,0.2) !important;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.04) !important;
+                background: rgba(255,255,255,0.7) !important;
+                width: 150px !important;
+                padding: 16px 12px 16px 16px !important;
+            }
+            body.dark .ext-panel {
+                background: rgba(44,44,46,0.7) !important;
+                border-color: rgba(255,255,255,0.05) !important;
+            }
+            .ext-panel .btn-ext {
+                font-size: 14px !important;
+                padding: 10px 0 !important;
+            }
+            .btn {
+                font-size: 26px !important;
+                min-height: 72px !important;
+            }
+            .btn.zero {
+                padding-left: 24px !important;
+            }
+            .display-expr {
+                font-size: 38px !important;
+                min-height: 48px !important;
+            }
+            .display-preview {
+                font-size: 24px !important;
+                min-height: 40px !important;
+            }
+            .display-preview.result {
+                font-size: 42px !important;
+                min-height: 64px !important;
+            }
+            .grid {
+                gap: 12px !important;
+            }
+            .menu-btn {
+                top: 20px !important;
+                left: 20px !important;
+                width: 44px !important;
+                height: 44px !important;
+            }
+            .theme-fixed {
+                top: 20px !important;
+                right: 20px !important;
+                width: 44px !important;
+                height: 44px !important;
+            }
+            .toggle-ext {
+                top: 20px !important;
+                left: 12px !important;
+                width: 36px !important;
+                height: 36px !important;
+            }
+            .header {
+                padding-left: 32px !important;
+            }
+            .brand {
+                font-size: 20px !important;
+            }
+            .header-logo img {
+                height: 36px !important;
+            }
+        }
+
+        /* ===== ГОРИЗОНТАЛЬНАЯ ОРИЕНТАЦИЯ НА ТЕЛЕФОНАХ ===== */
+        @media (max-width: 767px) and (orientation: landscape) {
+            .container {
+                padding: 10px 14px !important;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .ext-panel {
+                width: 80px !important;
+                padding: 10px 6px 10px 10px !important;
+            }
+            .ext-panel .btn-ext {
+                font-size: 11px !important;
+                padding: 6px 0 !important;
+                border-radius: 6px !important;
+            }
+            .btn {
+                font-size: 16px !important;
+                min-height: 44px !important;
+            }
+            .btn.zero {
+                padding-left: 10px !important;
+            }
+            .display-expr {
+                font-size: 24px !important;
+                min-height: 32px !important;
+            }
+            .display-preview {
+                font-size: 16px !important;
+                min-height: 30px !important;
+            }
+            .display-preview.result {
+                font-size: 28px !important;
+                min-height: 44px !important;
+            }
+            .grid {
+                gap: 6px !important;
+            }
+            .header {
+                padding-left: 16px !important;
+                margin-bottom: 6px !important;
+            }
+            .brand {
+                font-size: 14px !important;
+            }
+            .menu-btn {
+                top: 8px !important;
+                left: 8px !important;
+                width: 34px !important;
+                height: 34px !important;
+            }
+            .theme-fixed {
+                top: 8px !important;
+                right: 8px !important;
+                width: 34px !important;
+                height: 34px !important;
+            }
+            .toggle-ext {
+                top: 8px !important;
+                left: 2px !important;
+                width: 24px !important;
+                height: 24px !important;
+            }
+            .ext-panel.open {
+                margin-right: 4px !important;
+            }
+            .menu-side {
+                width: 200px !important;
+                padding: 12px !important;
+            }
+            .header-logo img {
+                height: 22px !important;
+            }
+        }
+
+        /* ===== ГОРИЗОНТАЛЬНАЯ ОРИЕНТАЦИЯ НА ПЛАНШЕТАХ ===== */
+        @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+            .calculator-wrapper {
+                max-width: 540px !important;
+            }
+            .container {
+                padding: 20px 24px !important;
+            }
+            .ext-panel {
+                width: 130px !important;
+                padding: 14px 10px 14px 14px !important;
+            }
+            .ext-panel .btn-ext {
+                font-size: 13px !important;
+                padding: 8px 0 !important;
+            }
+            .btn {
+                font-size: 24px !important;
+                min-height: 64px !important;
+            }
+            .display-expr {
+                font-size: 34px !important;
+                min-height: 44px !important;
+            }
+            .display-preview {
+                font-size: 22px !important;
+                min-height: 36px !important;
+            }
+            .display-preview.result {
+                font-size: 38px !important;
+                min-height: 56px !important;
+            }
+            .menu-btn {
+                top: 16px !important;
+                left: 16px !important;
+                width: 40px !important;
+                height: 40px !important;
+            }
+            .theme-fixed {
+                top: 16px !important;
+                right: 16px !important;
+                width: 40px !important;
+                height: 40px !important;
+            }
+            .header-logo img {
+                height: 32px !important;
+            }
+        }
+
+        /* ================================================================
+           ОСТАЛЬНЫЕ МЕДИА-ЗАПРОСЫ (ПК и общие)
+           ================================================================ */
+        @media (max-width: 420px) {
+            .ext-panel { width: 80px; padding: 10px 4px 10px 8px; }
+            .ext-panel .btn-ext { font-size: 11px; padding: 6px 0; border-radius: 6px; }
+            .btn { font-size: 18px; min-height: 48px; }
+            .btn.zero { padding-left: 12px; }
+            .menu-side { width: 200px; padding: 12px; }
+        }
+        @media (max-width: 280px) {
+            .container { padding: 8px; }
+            .display-expr { font-size: 20px; min-height: 28px; }
+            .display-preview { font-size: 14px; min-height: 24px; }
+            .btn { font-size: 14px; min-height: 36px; }
+            .grid { gap: 4px; }
+            .brand { font-size: 10px; }
+            .theme-fixed { width: 30px; height: 30px; top: 6px; right: 6px; }
+            .menu-btn { width: 30px; height: 30px; top: 6px; left: 6px; }
+            .ext-panel { width: 60px; padding: 8px 2px 8px 6px; }
+            .ext-panel .btn-ext { font-size: 9px; padding: 4px 0; border-radius: 4px; }
+            .ext-panel.open { margin-right: 4px; }
+            .btn.zero { padding-left: 6px; }
+            .menu-side { width: 160px; padding: 12px; }
+            .header-logo img { height: 18px !important; }
+        }
+        @media (min-width: 1025px) {
+            .calculator-wrapper { max-width: 640px; }
+            .container { padding: clamp(20px, 4vw, 36px); border-radius: 32px; }
+            .display-expr { font-size: 44px; min-height: 56px; }
+            .display-preview { font-size: 32px; min-height: 48px; }
+            .display-preview.result { font-size: 52px; min-height: 72px; }
+            .btn { font-size: 28px; min-height: 80px; }
+            .grid { gap: 14px; }
+            .brand { font-size: 22px; }
+            .theme-fixed { width: 48px; height: 48px; top: 28px; right: 28px; }
+            .toggle-ext { top: 28px; left: 16px; width: 40px; height: 40px; }
+            .toggle-ext svg { width: 22px; height: 22px; }
+            .header { padding-left: 40px; }
+            .ext-panel { width: 180px; padding: 24px 16px 24px 24px; }
+            .ext-panel .btn-ext { font-size: 17px; padding: 14px 0; }
+            .ext-panel.open { margin-right: 16px; }
+            .btn.zero { padding-left: 36px; }
+            .menu-side { width: 340px; padding: 32px 24px; }
+            .menu-btn { top: 28px; left: 28px; width: 48px; height: 48px; }
+            .header-logo img { height: 40px !important; }
+        }
+        @media (min-width: 600px) and (max-width: 1023px) {
+            .calculator-wrapper { max-width: 560px; }
+            .container { padding: 24px 20px 28px; }
+            .display-expr { font-size: 38px; min-height: 48px; }
+            .display-preview { font-size: 24px; min-height: 40px; }
+            .btn { font-size: 22px; min-height: 64px; }
+            .theme-fixed { width: 44px; height: 44px; top: 22px; right: 22px; }
+            .ext-panel { width: 140px; }
+            .ext-panel.open { margin-right: 10px; }
+            .menu-side { width: 280px; }
+            .menu-btn { top: 22px; left: 22px; width: 44px; height: 44px; }
+        }
+        @media (min-width: 375px) and (max-width: 480px) {
+            .container { padding: 16px 14px 20px; border-radius: 22px; }
+            .display-expr { font-size: 26px; min-height: 36px; }
+            .display-preview { font-size: 18px; min-height: 32px; }
+            .btn { font-size: 18px; min-height: 50px; }
+            .grid { gap: 8px; }
+            .btn.zero { padding-left: 14px; }
+            .menu-side { width: 240px; }
+            .menu-btn { top: 14px; left: 14px; width: 38px; height: 38px; }
+            .header-logo img { height: 28px !important; }
+        }
+        @media (max-width: 374px) {
+            .container { padding: 14px 10px 16px; border-radius: 18px; }
+            .display-expr { font-size: 22px; min-height: 32px; }
+            .display-preview { font-size: 16px; min-height: 28px; }
+            .btn { font-size: 16px; min-height: 42px; }
+            .grid { gap: 6px; }
+            .brand { font-size: 12px; }
+            .theme-fixed { width: 36px; height: 36px; top: 14px; right: 14px; }
+            .menu-side { width: 200px; padding: 16px; }
+            .menu-btn { top: 14px; left: 14px; width: 36px; height: 36px; }
+            .header-logo img { height: 24px !important; }
+        }
+        @media (min-width: 800px) and (max-width: 1024px) and (orientation: landscape) {
+            .calculator-wrapper { max-width: 540px; }
+            .container { padding: 18px 20px 22px; }
+            .display-expr { font-size: 32px; min-height: 44px; }
+            .display-preview { font-size: 20px; min-height: 34px; }
+            .btn { font-size: 20px; min-height: 54px; }
+            .theme-fixed { width: 42px; height: 42px; top: 16px; right: 16px; }
+            .ext-panel { width: 110px; }
+            .ext-panel.open { margin-right: 8px; }
+            .menu-btn { top: 16px; left: 16px; width: 42px; height: 42px; }
+            .header-logo img { height: 32px !important; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== КНОПКА ГАМБУРГЕРА ===== -->
+    <button class="menu-btn" id="menuBtn" aria-label="Меню">
+        <span></span><span></span><span></span>
+    </button>
+
+    <!-- ===== КНОПКА ТЕМЫ ===== -->
+    <button class="theme-fixed" id="themeToggle" aria-label="Переключить тему">
+        <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+
+    <!-- ===== БОКОВОЕ МЕНЮ ===== -->
+    <div class="menu-overlay" id="menuOverlay">
+        <div class="menu-backdrop" id="menuBackdrop"></div>
+        <div class="menu-side" id="menuSide">
+            <div class="menu-header">
+                <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="14" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
+                Меню
+            </div>
+            <!-- Калькулятор -->
+            <div class="menu-item">
+                <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/><line x1="12" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/><line x1="12" y1="18" x2="16" y2="18"/></svg>
+                Калькулятор
+            </div>
+            <!-- Настройки (раскрывающиеся) -->
+            <div class="menu-item" id="settingsToggle">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Настройки
+                <span class="arrow">▶</span>
+            </div>
+            <div class="sub-menu" id="settingsSub">
+                <!-- Цвета -->
+                <div class="menu-item" style="font-weight:600; padding-top:12px; pointer-events:none;">Цвета</div>
+                <div class="menu-item" data-color="#FF9500" style="padding-left:8px;">
+                    <span class="color-preview" style="background:#FF9500;"></span> Оранжевый
+                </div>
+                <div class="menu-item" data-color="#007AFF" style="padding-left:8px;">
+                    <span class="color-preview" style="background:#007AFF;"></span> Синий
+                </div>
+                <div class="menu-item" data-color="#34C759" style="padding-left:8px;">
+                    <span class="color-preview" style="background:#34C759;"></span> Зелёный
+                </div>
+                <div class="menu-item" data-color="#AF52DE" style="padding-left:8px;">
+                    <span class="color-preview" style="background:#AF52DE;"></span> Фиолетовый
+                </div>
+                <div class="menu-item" data-color="#FF2D55" style="padding-left:8px;">
+                    <span class="color-preview" style="background:#FF2D55;"></span> Розовый
+                </div>
+                <!-- Оформление -->
+                <div class="menu-item" style="font-weight:600; padding-top:16px; pointer-events:none;">Оформление</div>
+                <div class="theme-toggle-item">
+                    <span>Тёмная тема</span>
+                    <div class="switch" id="themeSwitch"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== КАЛЬКУЛЯТОР ===== -->
+    <div class="calculator-wrapper">
+        <!-- Выезжающая панель функций -->
+        <div class="ext-panel" id="extPanel">
+            <button class="btn-ext" data-action="lparen">(</button>
+            <button class="btn-ext" data-action="rparen">)</button>
+            <button class="btn-ext operator" data-action="percent">%</button>
+            <button class="btn-ext operator" data-action="sqrt">√</button>
+            <button class="btn-ext operator" data-action="pi">π</button>
+            <button class="btn-ext" data-action="square">x²</button>
+            <button class="btn-ext" data-action="cube">x³</button>
+            <button class="btn-ext" data-action="inv">1/x</button>
+            <button class="btn-ext" data-action="factorial">x!</button>
+        </div>
+
+        <!-- Основной корпус -->
+        <div class="container" id="mainContainer">
+            <button class="toggle-ext" id="toggleExt" aria-label="Расширить панель">
+                <svg viewBox="0 0 24 24" id="arrowIcon"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+
+            <!-- Хедер с логотипом -->
+            <div class="header">
+                <div class="header-logo">
+                    <img src="Calculator-Favicon.png" alt="Calculator" />
+                </div>
+                <span class="brand">Calc<span>ulator</span></span>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="display">
+                <div class="display-expr" id="exprDisplay">0</div>
+                <div class="display-preview" id="previewDisplay"></div>
+            </div>
+
+            <div class="grid">
+                <button class="btn func" data-action="clear">AC</button>
+                <button class="btn func" data-action="sign">±</button>
+                <button class="btn func" data-action="percent">%</button>
+                <button class="btn operator" data-action="divide">÷</button>
+
+                <button class="btn" data-value="7">7</button>
+                <button class="btn" data-value="8">8</button>
+                <button class="btn" data-value="9">9</button>
+                <button class="btn operator" data-action="multiply">×</button>
+
+                <button class="btn" data-value="4">4</button>
+                <button class="btn" data-value="5">5</button>
+                <button class="btn" data-value="6">6</button>
+                <button class="btn operator" data-action="subtract">−</button>
+
+                <button class="btn" data-value="1">1</button>
+                <button class="btn" data-value="2">2</button>
+                <button class="btn" data-value="3">3</button>
+                <button class="btn operator" data-action="add">+</button>
+
+                <button class="btn zero" data-value="0">0</button>
+                <button class="btn" data-value=".">.</button>
+                <button class="btn equal" data-action="equals">=</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        //  ЛОГИКА КАЛЬКУЛЯТОРА + МЕНЮ
+        // ================================================================
+
+        // ----- Элементы -----
+        const exprDisplay = document.getElementById('exprDisplay');
+        const previewDisplay = document.getElementById('previewDisplay');
+        const themeToggle = document.getElementById('themeToggle');
+        const toggleExt = document.getElementById('toggleExt');
+        const extPanel = document.getElementById('extPanel');
+        const arrowIcon = document.getElementById('arrowIcon');
+        const menuBtn = document.getElementById('menuBtn');
+        const menuOverlay = document.getElementById('menuOverlay');
+        const menuBackdrop = document.getElementById('menuBackdrop');
+        const menuSide = document.getElementById('menuSide');
+        const settingsToggle = document.getElementById('settingsToggle');
+        const settingsSub = document.getElementById('settingsSub');
+        const themeSwitch = document.getElementById('themeSwitch');
+
+        // ----- Состояние калькулятора -----
+        let exprString = '0';
+        let justEvaluated = false;
+
+        // ----- Парсер выражений (умный) -----
+        function tokenize(expr) {
+            const tokens = [];
+            let number = '';
+            let i = 0;
+            while (i < expr.length) {
+                const ch = expr[i];
+                if (ch === ' ') { i++; continue; }
+                if (ch >= '0' && ch <= '9' || ch === '.') {
+                    number += ch;
+                    i++;
+                    continue;
+                }
+                if (number !== '') {
+                    tokens.push({ type: 'number', value: parseFloat(number) });
+                    number = '';
+                }
+                if ('+-*/%()'.includes(ch)) {
+                    tokens.push({ type: 'operator', value: ch });
+                    i++;
+                    continue;
+                }
+                if (ch === 'π') {
+                    tokens.push({ type: 'number', value: Math.PI });
+                    i++;
+                    continue;
+                }
+                i++;
+            }
+            if (number !== '') {
+                tokens.push({ type: 'number', value: parseFloat(number) });
+            }
+            return tokens;
+        }
+
+        function shuntingYard(tokens) {
+            const output = [];
+            const stack = [];
+            const precedence = {
+                '+': 2, '-': 2, '*': 3, '/': 3, '%': 3
+            };
+            const associativity = {
+                '+': 'L', '-': 'L', '*': 'L', '/': 'L', '%': 'L'
+            };
+            let i = 0;
+            while (i < tokens.length) {
+                const token = tokens[i];
+                if (token.type === 'number') {
+                    output.push(token);
+                    i++;
+                    continue;
+                }
+                if (token.type === 'operator') {
+                    const op = token.value;
+                    if (op === '(') {
+                        stack.push(token);
+                        i++;
+                        continue;
+                    }
+                    if (op === ')') {
+                        while (stack.length > 0 && stack[stack.length-1].value !== '(') {
+                            output.push(stack.pop());
+                        }
+                        if (stack.length > 0 && stack[stack.length-1].value === '(') {
+                            stack.pop();
+                        }
+                        i++;
+                        continue;
+                    }
+                    if (op === '-' && (i === 0 || (tokens[i-1].type === 'operator' && tokens[i-1].value !== ')'))) {
+                        if (i+1 < tokens.length && tokens[i+1].type === 'number') {
+                            tokens[i+1].value = -tokens[i+1].value;
+                            i++;
+                            continue;
+                        } else {
+                            output.push({ type: 'number', value: -1 });
+                            stack.push({ type: 'operator', value: '*' });
+                            i++;
+                            continue;
+                        }
+                    }
+                    while (stack.length > 0 && stack[stack.length-1].type === 'operator') {
+                        const topOp = stack[stack.length-1].value;
+                        if ((associativity[op] === 'L' && precedence[op] <= precedence[topOp]) ||
+                            (associativity[op] === 'R' && precedence[op] < precedence[topOp])) {
+                            output.push(stack.pop());
+                        } else {
+                            break;
+                        }
+                    }
+                    stack.push(token);
+                    i++;
+                }
+            }
+            while (stack.length > 0) {
+                output.push(stack.pop());
+            }
+            return output;
+        }
+
+        function evaluateRPN(rpn) {
+            const stack = [];
+            for (const token of rpn) {
+                if (token.type === 'number') {
+                    stack.push(token.value);
+                } else if (token.type === 'operator') {
+                    const op = token.value;
+                    if ('+-*/%'.includes(op)) {
+                        const b = stack.pop();
+                        const a = stack.pop();
+                        if (a === undefined || b === undefined) return null;
+                        let result;
+                        switch (op) {
+                            case '+': result = a + b; break;
+                            case '-': result = a - b; break;
+                            case '*': result = a * b; break;
+                            case '/': result = b !== 0 ? a / b : null; break;
+                            case '%': result = a * (b / 100); break;
+                            default: result = null;
+                        }
+                        if (result === null) return null;
+                        stack.push(result);
+                    }
+                }
+            }
+            if (stack.length === 1) return stack[0];
+            return null;
+        }
+
+        function evaluate(expr) {
+            if (!expr || expr.trim() === '') return null;
+            let sanitized = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+            if (/^[+\-*/%()]+$/.test(sanitized)) return null;
+            try {
+                const tokens = tokenize(sanitized);
+                const rpn = shuntingYard(tokens);
+                const result = evaluateRPN(rpn);
+                return result;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // ----- Обновление экрана -----
+        function updateDisplay() {
+            exprDisplay.textContent = exprString || '0';
+            if (!justEvaluated) {
+                const result = evaluate(exprString);
+                if (result !== null && !isNaN(result) && isFinite(result)) {
+                    const resultStr = parseFloat(result.toFixed(10)).toString();
+                    previewDisplay.textContent = '= ' + resultStr;
+                    previewDisplay.classList.remove('result');
+                } else if (result === null && exprString.length > 0) {
+                    previewDisplay.textContent = '';
+                    previewDisplay.classList.remove('result');
+                } else {
+                    previewDisplay.textContent = '';
+                    previewDisplay.classList.remove('result');
+                }
+            }
+        }
+
+        // ----- Действия калькулятора -----
+        function clearAll() {
+            exprString = '0';
+            justEvaluated = false;
+            previewDisplay.classList.remove('result');
+            updateDisplay();
+        }
+
+        function inputSymbol(symbol) {
+            if (justEvaluated) {
+                exprString = '0';
+                justEvaluated = false;
+                previewDisplay.classList.remove('result');
+            }
+            if (exprString === '0' && symbol !== '.' && symbol !== '(' && symbol !== 'π') {
+                exprString = symbol;
+            } else {
+                exprString += symbol;
+            }
+            updateDisplay();
+        }
+
+        function handleOperator(op) {
+            if (justEvaluated) {
+                const result = evaluate(exprString);
+                if (result !== null && !isNaN(result) && isFinite(result)) {
+                    exprString = parseFloat(result.toFixed(10)).toString();
+                    justEvaluated = false;
+                    previewDisplay.classList.remove('result');
+                } else {
+                    exprString = '0';
+                    justEvaluated = false;
+                    previewDisplay.classList.remove('result');
+                }
+            }
+            const lastChar = exprString[exprString.length - 1];
+            if ('+-*/%'.includes(lastChar)) {
+                exprString = exprString.slice(0, -1) + op;
+            } else {
+                exprString += op;
+            }
+            updateDisplay();
+        }
+
+        function handleEquals() {
+            if (!exprString || exprString === '0') { clearAll(); return; }
+            const result = evaluate(exprString);
+            if (result === null || isNaN(result) || !isFinite(result)) {
+                exprDisplay.textContent = 'Error';
+                previewDisplay.textContent = '';
+                exprString = '0';
+                justEvaluated = false;
+                return;
+            }
+            const resultStr = parseFloat(result.toFixed(10)).toString();
+            exprString = resultStr;
+            justEvaluated = true;
+            previewDisplay.classList.add('result');
+            previewDisplay.textContent = resultStr;
+            exprDisplay.textContent = resultStr;
+        }
+
+        function toggleSign() {
+            if (justEvaluated) {
+                const num = parseFloat(exprString);
+                if (!isNaN(num) && num !== 0) {
+                    exprString = String(-num);
+                    justEvaluated = false;
+                    previewDisplay.classList.remove('result');
+                    updateDisplay();
+                }
+                return;
+            }
+            const result = evaluate(exprString);
+            if (result !== null && !isNaN(result) && isFinite(result)) {
+                const newVal = -result;
+                exprString = String(newVal);
+                justEvaluated = false;
+                previewDisplay.classList.remove('result');
+                updateDisplay();
+            } else {
+                if (exprString.startsWith('-')) {
+                    exprString = exprString.slice(1);
+                } else {
+                    exprString = '-' + exprString;
+                }
+                updateDisplay();
+            }
+        }
+
+        function applyFunction(func) {
+            const result = evaluate(exprString);
+            if (result === null || isNaN(result) || !isFinite(result)) {
+                exprDisplay.textContent = 'Error';
+                previewDisplay.textContent = '';
+                exprString = '0';
+                justEvaluated = false;
+                return;
+            }
+            let newVal;
+            switch (func) {
+                case 'sqrt':
+                    if (result < 0) { newVal = NaN; } else { newVal = Math.sqrt(result); }
+                    break;
+                case 'square':
+                    newVal = result * result;
+                    break;
+                case 'cube':
+                    newVal = result * result * result;
+                    break;
+                case 'inv':
+                    if (result === 0) { newVal = NaN; } else { newVal = 1 / result; }
+                    break;
+                case 'factorial':
+                    const n = Math.round(result);
+                    if (n < 0 || !Number.isInteger(n)) { newVal = NaN; } else {
+                        let f = 1;
+                        for (let i = 2; i <= n; i++) f *= i;
+                        newVal = f;
+                    }
+                    break;
+                case 'pi':
+                    newVal = Math.PI;
+                    break;
+                default:
+                    return;
+            }
+            if (isNaN(newVal) || !isFinite(newVal)) {
+                exprDisplay.textContent = 'Error';
+                previewDisplay.textContent = '';
+                exprString = '0';
+                justEvaluated = false;
+                return;
+            }
+            const resultStr = parseFloat(newVal.toFixed(10)).toString();
+            exprString = resultStr;
+            justEvaluated = true;
+            previewDisplay.classList.add('result');
+            previewDisplay.textContent = resultStr;
+            exprDisplay.textContent = resultStr;
+        }
+
+        // ----- Обработчики кнопок калькулятора -----
+        document.querySelectorAll('.btn, .btn-ext').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const value = btn.dataset.value;
+                const action = btn.dataset.action;
+
+                if (value !== undefined) {
+                    if (value === '.') {
+                        inputSymbol('.');
+                    } else {
+                        inputSymbol(value);
+                    }
+                    return;
+                }
+
+                switch (action) {
+                    case 'clear':
+                        clearAll();
+                        break;
+                    case 'sign':
+                        toggleSign();
+                        break;
+                    case 'percent':
+                        inputSymbol('%');
+                        break;
+                    case 'add':
+                        handleOperator('+');
+                        break;
+                    case 'subtract':
+                        handleOperator('−');
+                        break;
+                    case 'multiply':
+                        handleOperator('×');
+                        break;
+                    case 'divide':
+                        handleOperator('÷');
+                        break;
+                    case 'equals':
+                        handleEquals();
+                        break;
+                    case 'lparen':
+                        inputSymbol('(');
+                        break;
+                    case 'rparen':
+                        inputSymbol(')');
+                        break;
+                    case 'sqrt':
+                        applyFunction('sqrt');
+                        break;
+                    case 'pi':
+                        inputSymbol('π');
+                        break;
+                    case 'square':
+                        applyFunction('square');
+                        break;
+                    case 'cube':
+                        applyFunction('cube');
+                        break;
+                    case 'inv':
+                        applyFunction('inv');
+                        break;
+                    case 'factorial':
+                        applyFunction('factorial');
+                        break;
+                    default:
+                        break;
+                }
+            });
+        });
+
+        // ----- Клавиатура -----
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            if (/^[0-9]$/.test(key)) { inputSymbol(key);
+                e.preventDefault(); return; }
+            if (key === '.') { inputSymbol('.');
+                e.preventDefault(); return; }
+            if (key === '+') { handleOperator('+');
+                e.preventDefault(); return; }
+            if (key === '-') { handleOperator('−');
+                e.preventDefault(); return; }
+            if (key === '*') { handleOperator('×');
+                e.preventDefault(); return; }
+            if (key === '/') { handleOperator('÷');
+                e.preventDefault(); return; }
+            if (key === 'Enter' || key === '=') { handleEquals();
+                e.preventDefault(); return; }
+            if (key === 'Backspace') {
+                if (exprString.length > 1) {
+                    exprString = exprString.slice(0, -1);
+                    if (exprString === '') exprString = '0';
+                    justEvaluated = false;
+                    previewDisplay.classList.remove('result');
+                    updateDisplay();
+                } else {
+                    clearAll();
+                }
+                e.preventDefault();
+                return;
+            }
+            if (key === 'Escape') { clearAll();
+                e.preventDefault(); return; }
+            if (key === '(') { inputSymbol('(');
+                e.preventDefault(); return; }
+            if (key === ')') { inputSymbol(')');
+                e.preventDefault(); return; }
+        });
+
+        // ================================================================
+        //  МЕНЮ И НАСТРОЙКИ
+        // ================================================================
+
+        let accentColor = '#FF9500';
+        let accentColorDark = '#FF9F0A';
+        let isDark = localStorage.getItem('calcTheme') === 'dark';
+
+        function setAccentColor(color, darkColor) {
+            accentColor = color;
+            accentColorDark = darkColor || color;
+            document.documentElement.style.setProperty('--accent-color', accentColor);
+            document.documentElement.style.setProperty('--accent-color-dark', accentColorDark);
+            localStorage.setItem('calcAccent', color);
+            localStorage.setItem('calcAccentDark', darkColor || color);
+            document.querySelectorAll('.color-preview').forEach(el => {
+                el.classList.remove('active');
+                if (el.style.backgroundColor === color || el.style.backgroundColor === darkColor) {
+                    el.classList.add('active');
+                }
+            });
+        }
+
+        const savedColor = localStorage.getItem('calcAccent');
+        const savedDarkColor = localStorage.getItem('calcAccentDark');
+        if (savedColor) {
+            accentColor = savedColor;
+            accentColorDark = savedDarkColor || savedColor;
+            document.documentElement.style.setProperty('--accent-color', accentColor);
+            document.documentElement.style.setProperty('--accent-color-dark', accentColorDark);
+        } else {
+            document.documentElement.style.setProperty('--accent-color', '#FF9500');
+            document.documentElement.style.setProperty('--accent-color-dark', '#FF9F0A');
+        }
+
+        function setTheme(dark) {
+            isDark = dark;
+            document.body.classList.toggle('dark', dark);
+            localStorage.setItem('calcTheme', dark ? 'dark' : 'light');
+            themeToggle.innerHTML = dark ?
+                `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.93 19.07 1.41-1.41"/><path d="m17.66 6.34 1.41-1.41"/></svg>` :
+                `<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+            themeSwitch.classList.toggle('active', dark);
+        }
+
+        setTheme(isDark);
+        themeSwitch.classList.toggle('active', isDark);
+
+        themeSwitch.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setTheme(!isDark);
+        });
+
+        themeToggle.addEventListener('click', () => {
+            setTheme(!isDark);
+        });
+
+        // ---- Меню ----
+        function toggleMenu() {
+            const isOpen = menuOverlay.classList.toggle('open');
+            menuBtn.classList.toggle('active', isOpen);
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+        }
+
+        menuBtn.addEventListener('click', toggleMenu);
+        menuBackdrop.addEventListener('click', toggleMenu);
+
+        settingsToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsToggle.classList.toggle('open');
+        });
+
+        document.querySelectorAll('.menu-item[data-color]').forEach(item => {
+            item.addEventListener('click', () => {
+                const color = item.dataset.color;
+                let darkColor = color;
+                if (color === '#007AFF') darkColor = '#0A84FF';
+                else if (color === '#34C759') darkColor = '#30D158';
+                else if (color === '#AF52DE') darkColor = '#BF5AF2';
+                else if (color === '#FF2D55') darkColor = '#FF375F';
+                else if (color === '#FF9500') darkColor = '#FF9F0A';
+                setAccentColor(color, darkColor);
+            });
+        });
+
+        // Инициализация активного цвета
+        document.querySelectorAll('.color-preview').forEach(el => {
+            const parent = el.closest('.menu-item');
+            if (parent) {
+                const color = parent.dataset.color;
+                if (color === accentColor || color === accentColorDark) {
+                    el.classList.add('active');
+                }
+            }
+        });
+
+        // ================================================================
+        //  ПАНЕЛЬ РАСШИРЕННЫХ ФУНКЦИЙ
+        // ================================================================
+        let isExtOpen = false;
+        toggleExt.addEventListener('click', () => {
+            isExtOpen = !isExtOpen;
+            extPanel.classList.toggle('open', isExtOpen);
+            if (isExtOpen) {
+                arrowIcon.innerHTML = `<polyline points="9 18 15 12 9 6"/>`;
+            } else {
+                arrowIcon.innerHTML = `<polyline points="15 18 9 12 15 6"/>`;
+            }
+        });
+
+        clearAll();
+    </script>
+</body>
+</html>
